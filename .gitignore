@@ -1,0 +1,111 @@
+# ====================================================================
+# OS / IDE / Editor Specific (VS Code, Windows, macOS)
+# ====================================================================
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.history/
+.ionide/
+
+# Shared AI tooling junction/folder
+.ai-tooling/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# ====================================================================
+# Frontend (.NET / Vue Core Shared Outputs)
+# ====================================================================
+dist/
+dist-ssr/
+*.local
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ====================================================================
+# Backend (C# / .NET)
+# ====================================================================
+# Build and Compilation outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# CSRF/Data Protection keys & user secrets
+[Vv]irtual[Dd]irectoryLayout/
+.jsonkeys/
+App_Data/jobs/
+App_Data/nuget/
+secrets.json
+TransformWebConfig/
+
+# .NET Core / EF Core Specific
+project.lock.json
+project.fragment.lock.json
+artifacts/
+ScaffoldingSetting.json
+.vs/
+.idea/
+*.db-wal
+*.db-shm
+
+# Dotnet local CLI tools and storage
+.dotnet/
+.tools/
+*.reSharper
+*.DotSettings.user
+
+# ====================================================================
+# Frontend (Vue / Node / TypeScript)
+# ====================================================================
+# Dependencies
+node_modules/
+jspm_packages/
+.pnpm-store/
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor/Linting caches
+.eslintcache
+.stylelintcache
+.vuepress/dist
+.nuxt/
+.output/
+.vitepress/dist
+.cache/
+.parcel-cache/
+
+# Cypress / Test outputs
+生成/
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+
+# ====================================================================
+# Environment Secrets & Local Configurations (CRITICAL)
+# ====================================================================
+# Backend secrets
+appsettings.Development.json
+appsettings.Local.json
+
+# Frontend secrets
+.env
+.env.local
+.env.*.local
+
+# Backup and temporary files
+*.bak
+*.cache
+*.tmp
