@@ -22,10 +22,9 @@ public sealed class TeamMemberService : ITeamMemberService
             .ThenInclude(memberGroup => memberGroup.TeamGroup)
             .AsQueryable();
 
-        if (!includeDeleted)
-        {
-            query = query.Where(member => member.DeletedDate == null);
-        }
+        query = includeDeleted
+            ? query.Where(member => member.DeletedDate != null)
+            : query.Where(member => member.DeletedDate == null);
 
         var members = await query
             .OrderBy(member => member.LastName)

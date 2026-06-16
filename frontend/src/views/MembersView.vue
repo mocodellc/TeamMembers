@@ -1,33 +1,40 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import MemberDetailsEditor from '../components/MemberDetailsEditor.vue'
-import { useGroupsStore } from '../stores/groupsStore'
-import { useMembersStore } from '../stores/membersStore'
-import type { TeamMember, TeamMemberDraft, TeamMemberUpsertRequest } from '../types/teamDirectory'
+import { computed, onMounted, ref, watch } from "vue";
+import MemberDetailsEditor from "../components/MemberDetailsEditor.vue";
+import { useGroupsStore } from "../stores/groupsStore";
+import { useMembersStore } from "../stores/membersStore";
+import type {
+  TeamMember,
+  TeamMemberDraft,
+  TeamMemberUpsertRequest,
+} from "../types/teamDirectory";
 
-const membersStore = useMembersStore()
-const groupsStore = useGroupsStore()
+const membersStore = useMembersStore();
+const groupsStore = useGroupsStore();
 
-const activeEditMemberId = ref<number | 'new' | null>(null)
-const isSaving = ref(false)
-const activeDraft = ref<TeamMemberDraft>(createEmptyDraft())
+const activeEditMemberId = ref<number | "new" | null>(null);
+const isSaving = ref(false);
+const activeDraft = ref<TeamMemberDraft>(createEmptyDraft());
 
-const hasRows = computed(() => membersStore.members.length > 0)
+const hasRows = computed(() => membersStore.members.length > 0);
 
 onMounted(async () => {
-  await Promise.all([groupsStore.loadGroups(), membersStore.loadMembers(false)])
-})
+  await Promise.all([
+    groupsStore.loadGroups(),
+    membersStore.loadMembers(false),
+  ]);
+});
 
 function createEmptyDraft(): TeamMemberDraft {
   return {
-    firstName: '',
-    lastName: '',
-    email: '',
-    jobTitle: '',
-    department: '',
-    country: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    jobTitle: "",
+    department: "",
+    country: "",
     groupIds: [],
-  }
+  };
 }
 
 function createDraftFromMember(member: TeamMember): TeamMemberDraft {
@@ -39,33 +46,35 @@ function createDraftFromMember(member: TeamMember): TeamMemberDraft {
     department: member.department,
     country: member.country,
     groupIds: member.groups.map((group) => group.teamGroupId),
-  }
+  };
 }
 
-async function onToggleIncludeDeleted(event: Event): Promise<void> {
-  const target = event.target as HTMLInputElement
-  await membersStore.loadMembers(target.checked)
-}
+watch(
+  () => membersStore.includeDeleted,
+  (includeDeleted) => {
+    void membersStore.loadMembers(includeDeleted);
+  },
+);
 
 function beginCreate(): void {
-  membersStore.clearMessages()
-  activeEditMemberId.value = 'new'
-  activeDraft.value = createEmptyDraft()
+  membersStore.clearMessages();
+  activeEditMemberId.value = "new";
+  activeDraft.value = createEmptyDraft();
 }
 
 function beginEdit(member: TeamMember): void {
-  membersStore.clearMessages()
-  activeEditMemberId.value = member.teamMemberId
-  activeDraft.value = createDraftFromMember(member)
+  membersStore.clearMessages();
+  activeEditMemberId.value = member.teamMemberId;
+  activeDraft.value = createDraftFromMember(member);
 }
 
 function cancelEdit(): void {
-  activeEditMemberId.value = null
-  activeDraft.value = createEmptyDraft()
+  activeEditMemberId.value = null;
+  activeDraft.value = createEmptyDraft();
 }
 
 async function saveDraft(draft: TeamMemberDraft): Promise<void> {
-  isSaving.value = true
+  isSaving.value = true;
 
   const request: TeamMemberUpsertRequest = {
     firstName: draft.firstName.trim(),
@@ -75,52 +84,60 @@ async function saveDraft(draft: TeamMemberDraft): Promise<void> {
     department: draft.department.trim(),
     country: draft.country.trim(),
     groupIds: [...draft.groupIds],
-  }
+  };
 
-  let success = false
-  if (activeEditMemberId.value === 'new') {
-    success = await membersStore.createMemberAndReload(request)
-  } else if (typeof activeEditMemberId.value === 'number') {
-    success = await membersStore.updateMemberAndReload(activeEditMemberId.value, request)
+  let success = false;
+  if (activeEditMemberId.value === "new") {
+    success = await membersStore.createMemberAndReload(request);
+  } else if (typeof activeEditMemberId.value === "number") {
+    success = await membersStore.updateMemberAndReload(
+      activeEditMemberId.value,
+      request,
+    );
   }
 
   if (success) {
-    cancelEdit()
+    cancelEdit();
   }
 
-  isSaving.value = false
+  isSaving.value = false;
 }
 
 async function deleteOrUndelete(member: TeamMember): Promise<void> {
   if (member.deletedDate === null) {
-    await membersStore.deleteMemberAndReload(member.teamMemberId)
-    return
+    await membersStore.deleteMemberAndReload(member.teamMemberId);
+    return;
   }
 
-  await membersStore.undeleteMemberAndReload(member.teamMemberId)
+  await membersStore.undeleteMemberAndReload(member.teamMemberId);
 }
 
 function formatDate(value: string | null): string {
   if (value === null) {
-    return '-'
+    return "-";
   }
 
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString()
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
 }
 </script>
 
 <template>
-  <section class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/40 md:p-6">
-    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+  <section
+    class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/40 md:p-6"
+  >
+    <div
+      class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+    >
       <h2 class="font-heading text-2xl text-white">Members</h2>
       <div class="flex flex-wrap items-center gap-3">
-        <label class="inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200">
+        <label
+          class="inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200"
+        >
           <input
-            :checked="membersStore.includeDeleted"
+            v-model="membersStore.includeDeleted"
             type="checkbox"
             class="h-4 w-4 accent-cyan-400"
-            @change="onToggleIncludeDeleted"
           />
           <span>Show deleted</span>
         </label>
@@ -134,10 +151,16 @@ function formatDate(value: string | null): string {
       </div>
     </div>
 
-    <p v-if="membersStore.errorMessage" class="mb-3 rounded-md border border-rose-400/50 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
+    <p
+      v-if="membersStore.errorMessage"
+      class="mb-3 rounded-md border border-rose-400/50 bg-rose-950/40 px-3 py-2 text-sm text-rose-200"
+    >
       {{ membersStore.errorMessage }}
     </p>
-    <p v-if="membersStore.successMessage" class="mb-3 rounded-md border border-emerald-400/50 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-200">
+    <p
+      v-if="membersStore.successMessage"
+      class="mb-3 rounded-md border border-emerald-400/50 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-200"
+    >
       {{ membersStore.successMessage }}
     </p>
 
@@ -167,45 +190,57 @@ function formatDate(value: string | null): string {
             <th class="px-3 py-3 text-right font-medium">Action</th>
           </tr>
         </thead>
-        <tbody v-for="member in membersStore.members" :key="member.teamMemberId" class="divide-y divide-slate-800 bg-slate-900/40">
-          <tr :class="member.deletedDate ? 'bg-rose-950/20 text-slate-400' : 'text-slate-100'">
-              <td class="px-3 py-3">{{ member.firstName }} {{ member.lastName }}</td>
-              <td class="px-3 py-3">{{ member.email }}</td>
-              <td class="px-3 py-3">{{ member.jobTitle }}</td>
-              <td class="px-3 py-3">{{ member.department }}</td>
-              <td class="px-3 py-3">
-                <div class="flex flex-wrap gap-1">
-                  <span
-                    v-for="group in member.groups"
-                    :key="group.teamGroupId"
-                    class="rounded-full border border-cyan-500/50 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
-                  >
-                    {{ group.name }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-3 py-3">{{ formatDate(member.createdDate) }}</td>
-              <td class="px-3 py-3">{{ formatDate(member.lastEditDate) }}</td>
-              <td class="px-3 py-3">{{ formatDate(member.deletedDate) }}</td>
-              <td class="px-3 py-3">
-                <div class="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-cyan-400 hover:text-cyan-200"
-                    @click="beginEdit(member)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-rose-400 hover:text-rose-200"
-                    @click="deleteOrUndelete(member)"
-                  >
-                    {{ member.deletedDate ? 'Undelete' : 'Delete' }}
-                  </button>
-                </div>
-              </td>
-            </tr>
+        <tbody
+          v-for="member in membersStore.members"
+          :key="member.teamMemberId"
+          class="divide-y divide-slate-800 bg-slate-900/40"
+        >
+          <tr
+            :class="
+              member.deletedDate
+                ? 'bg-rose-950/20 text-slate-400'
+                : 'text-slate-100'
+            "
+          >
+            <td class="px-3 py-3">
+              {{ member.firstName }} {{ member.lastName }}
+            </td>
+            <td class="px-3 py-3">{{ member.email }}</td>
+            <td class="px-3 py-3">{{ member.jobTitle }}</td>
+            <td class="px-3 py-3">{{ member.department }}</td>
+            <td class="px-3 py-3">
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="group in member.groups"
+                  :key="group.teamGroupId"
+                  class="rounded-full border border-cyan-500/50 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
+                >
+                  {{ group.name }}
+                </span>
+              </div>
+            </td>
+            <td class="px-3 py-3">{{ formatDate(member.createdDate) }}</td>
+            <td class="px-3 py-3">{{ formatDate(member.lastEditDate) }}</td>
+            <td class="px-3 py-3">{{ formatDate(member.deletedDate) }}</td>
+            <td class="px-3 py-3">
+              <div class="flex justify-end gap-2">
+                <button
+                  type="button"
+                  class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-cyan-400 hover:text-cyan-200"
+                  @click="beginEdit(member)"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-rose-400 hover:text-rose-200"
+                  @click="deleteOrUndelete(member)"
+                >
+                  {{ member.deletedDate ? "Undelete" : "Delete" }}
+                </button>
+              </div>
+            </td>
+          </tr>
           <tr v-if="activeEditMemberId === member.teamMemberId">
             <td colspan="9" class="p-3">
               <MemberDetailsEditor
@@ -222,7 +257,10 @@ function formatDate(value: string | null): string {
       </table>
     </div>
 
-    <div v-if="membersStore.isLoading" class="mt-3 rounded-md border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-300">
+    <div
+      v-if="membersStore.isLoading"
+      class="mt-3 rounded-md border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-300"
+    >
       Loading members...
     </div>
     <div
