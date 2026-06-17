@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { toRef } from "vue";
+import { useMemberDetailsEditorModel } from "../composables/useMemberDetailsEditorModel";
 import type { TeamGroup, TeamMemberDraft } from "../types/teamDirectory";
 
 interface MemberDetailsEditorProps {
@@ -21,65 +22,10 @@ const emit = defineEmits<{
   (event: "cancel"): void;
 }>();
 
-const localDraft = ref<TeamMemberDraft>({
-  firstName: props.modelValue.firstName,
-  lastName: props.modelValue.lastName,
-  email: props.modelValue.email,
-  jobTitle: props.modelValue.jobTitle,
-  department: props.modelValue.department,
-  country: props.modelValue.country,
-  groupIds: [...props.modelValue.groupIds],
-});
-
-watch(
-  () => props.modelValue,
-  (value) => {
-    localDraft.value = {
-      firstName: value.firstName,
-      lastName: value.lastName,
-      email: value.email,
-      jobTitle: value.jobTitle,
-      department: value.department,
-      country: value.country,
-      groupIds: [...value.groupIds],
-    };
-  },
-  { deep: true },
-);
-
-const isFormValid = computed(() => {
-  const { firstName, lastName, email, jobTitle, department, country } =
-    localDraft.value;
-  return [firstName, lastName, email, jobTitle, department, country].every(
-    (value) => value.trim().length > 0,
-  );
-});
-
-function toggleGroup(teamGroupId: number): void {
-  const selected = new Set(localDraft.value.groupIds);
-  if (selected.has(teamGroupId)) {
-    selected.delete(teamGroupId);
-  } else {
-    selected.add(teamGroupId);
-  }
-  localDraft.value.groupIds = Array.from(selected);
-}
-
-function onSave(): void {
-  emit("save", {
-    ...localDraft.value,
-    groupIds: [...localDraft.value.groupIds],
+const { localDraft, isFormValid, toggleGroup, onSave, formatInfoDate } =
+  useMemberDetailsEditorModel(toRef(props, "modelValue"), (value) => {
+    emit("save", value);
   });
-}
-
-function formatInfoDate(value: string | null | undefined): string {
-  if (value == null) {
-    return "-";
-  }
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
-}
 </script>
 
 <template>

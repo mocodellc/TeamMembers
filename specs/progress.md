@@ -97,3 +97,75 @@ Mark each line as PASS or FAIL. If FAIL, add a one-line remediation.
 
 - VS Code diagnostics may still display a stale local .vue module import warning in editor despite successful vue-tsc and Vite builds.
 - Future enhancement opportunity: add pagination, sorting, and search for larger team directories.
+
+## Update Log (2026-06-17)
+
+### Newly Completed Work
+
+- Updated member deleted toggle semantics end-to-end so API returns only the requested subset:
+  - unchecked (`includeDeleted=false`) => active members only
+  - checked (`includeDeleted=true`) => deleted members only
+- Added faker-based prefill behavior for "Create New Member" flow.
+- Added frontend script alias updates:
+  - replaced redundant run script naming with `start`
+  - `start` now performs build + preview in one command
+- Removed groups column from members table to reduce row bloat and keep group management in editor.
+- Moved member audit timestamps (Created, Last Edit, Deleted) out of table and into `MemberDetailsEditor` as read-only labels.
+- Fixed member-editor state bug where deleting a row being edited left stale editor UI open.
+- Disabled top controls (Show deleted and Create New Member) while member editor is open.
+- Added live member row-count badge beside the Members heading.
+- Refactored members/groups screen logic into shared composable:
+  - `frontend/src/composables/useTeamDirectoryViewModel.ts`
+  - thin `script setup` blocks retained in both views.
+- Added professional root `README.md` with overview, architecture, setup, and API summaries for GitHub landing display.
+
+### Current System State (Delta)
+
+- Members view now emphasizes essential columns only (name, email, role, department, action).
+- Audit information visibility moved to context where it is most actionable: inside edit/create panel.
+- View logic is centralized and reusable via composables, reducing duplication and script noise in SFCs.
+- UX safeguards are in place to prevent conflicting actions while editing.
+
+### Latest Validation Snapshot
+
+- Vue/TypeScript diagnostics in touched frontend files: clean.
+- Backend build task remains successful in workspace context.
+
+### Immediate Next Steps (Updated)
+
+1. Add automated tests for composable behavior (members/groups view-model actions and state transitions).
+2. Add lightweight e2e/manual checklist for deleted-toggle semantics and editor lockout behavior.
+3. Consider dedicated `pnpm run demo` script if a separate demo launch mode is desired from `start`.
+
+## Update Log (2026-06-17, Safety and Composables)
+
+### Newly Completed Work
+
+- Extracted member editor script logic into a dedicated composable:
+  - frontend/src/composables/useMemberDetailsEditorModel.ts
+  - frontend/src/components/MemberDetailsEditor.vue now focuses on props/emits/template wiring.
+- Standardized composable implementation style to const + arrow syntax across:
+  - frontend/src/composables/useTeamDirectoryViewModel.ts
+  - frontend/src/composables/useMemberDetailsEditorModel.ts
+- Added route-leave safeguard for unsaved member edits:
+  - blocks silent navigation and prompts for confirmation.
+- Added route-leave safeguard for unsaved group edits/drafts:
+  - detects active edit or non-empty draft values before navigation.
+- Prevented accidental row-level context switches while member editor is open:
+  - member table Edit/Delete buttons disabled during active editing.
+  - composable-level guard blocks row mutation handlers for non-active rows.
+
+### Current System State (Delta)
+
+- Editing workflows are now protected from accidental loss through both UI lockouts and route navigation confirmations.
+- View/component scripts remain thin while behavioral logic is centralized in composables.
+- Composable code style is now consistent and modernized with const-arrow function syntax.
+
+### Latest Validation Snapshot
+
+- Diagnostics clean for updated files:
+  - frontend/src/composables/useTeamDirectoryViewModel.ts
+  - frontend/src/composables/useMemberDetailsEditorModel.ts
+  - frontend/src/components/MemberDetailsEditor.vue
+  - frontend/src/views/MembersView.vue
+  - frontend/src/views/GroupsView.vue

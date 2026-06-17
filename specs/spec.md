@@ -5,12 +5,17 @@
 - Feature name: Team Directory
 - Scope: Full-Stack
 - Owner: Senior Fullstack Developer
-- Date: 2026-06-15
+- Date: 2026-06-17
 - Status: In Progress
+
+## AI Tooling Governance
+
+- Repository-level agent instructions are defined in [AGENTS.md](../AGENTS.md).
+- All new code and documentation changes must follow the source-of-truth standards/templates listed there in the required read order.
 
 ## Feature Summary
 
-Build a Team Directory full-stack application where users manage team members and team groups with persistent local SQLite storage. The frontend provides routed pages for members and groups, in-row member editing, and soft-delete visibility toggling. The backend exposes typed ASP.NET Core API contracts over EF Core entities and maintains audit timestamps.
+Build a Team Directory full-stack application where users manage team members and team groups with persistent local SQLite storage. The frontend provides routed pages for members and groups, composable-driven view models, in-row member editing, and soft-delete visibility toggling. The backend exposes typed ASP.NET Core API contracts over EF Core entities and maintains audit timestamps.
 
 ## In Scope
 
@@ -20,6 +25,10 @@ Build a Team Directory full-stack application where users manage team members an
 - [x] Include-deleted query behavior and member table action column with edit/delete/undelete actions
 - [x] SQL DDL and seed scripts matching the model schema and relationship rules
 - [x] Faker-based frontend mock/seed generation utility using @faker-js/faker
+- [x] Shared composable abstraction for members/groups view logic to keep Vue view scripts minimal
+- [x] Dedicated editor composable abstraction to keep component scripts focused on rendering and wiring
+- [x] Root README with project overview and run instructions for GitHub landing display
+- [x] Navigation and row-action safeguards that protect unsaved member/group edits from accidental loss
 
 ## Out of Scope
 
@@ -34,7 +43,7 @@ Build a Team Directory full-stack application where users manage team members an
 - Assumptions:
   - [x] SQLite database file is local to the backend project and auto-created on first run.
   - [x] Group assignment is editable while creating or updating a member.
-  - [x] Showing deleted users is a frontend-controlled filter passed as includeDeleted to the members API.
+  - [x] Showing deleted users is a frontend-controlled toggle passed as includeDeleted to the members API, where `includeDeleted=true` returns deleted-only rows.
 
 ## Acceptance Criteria Breakdown
 
@@ -79,7 +88,7 @@ Convert each AC into an atomic, testable item.
 
 - [x] Preconditions: Members route is loaded.
 - [x] Trigger/action: Members store loads member list from API.
-- [x] Expected result: Tabular rows render with member and group details.
+- [x] Expected result: Tabular rows render core member fields (name/email/role/department) with action controls.
 - [x] Negative case(s): Empty state message shown when no records exist.
 
 ### AC-007: User can CRUD each member and save
@@ -121,14 +130,14 @@ Convert each AC into an atomic, testable item.
 
 - [x] Preconditions: Members page loaded.
 - [x] Trigger/action: Toggle show deleted checkbox.
-- [x] Expected result: Members API request includes includeDeleted=true/false and UI updates.
+- [x] Expected result: Members API request includes includeDeleted=true/false; checked shows deleted-only rows and unchecked shows active rows.
 - [x] Negative case(s): Request failure shows error and keeps toggle state.
 
 ### AC-013: Action column and inline slide-down member detail editor behavior
 
 - [x] Preconditions: Members table row is visible.
 - [x] Trigger/action: Click edit or create new member.
-- [x] Expected result: Detail editor slides below row/top area with save and cancel behavior; no update on cancel.
+- [x] Expected result: Detail editor slides below row/top area with save and cancel behavior; while editor is open, top controls and row actions are disabled, route navigation prompts before discard, and audit info labels render in editor.
 - [x] Negative case(s): Invalid save shows validation error and retains form data.
 
 ## Data Contracts
@@ -210,21 +219,21 @@ Rules:
 
 ## AC Traceability Table
 
-| AC ID  | Spec Item(s)               | Design Section                       | Plan Step(s) | Implementation Ref                                                                            | Status    |
-| ------ | -------------------------- | ------------------------------------ | ------------ | --------------------------------------------------------------------------------------------- | --------- |
-| AC-001 | Scope, in-scope            | Architecture Approach by Scope       | 1-8          | Backend and frontend solution slices                                                          | Completed |
-| AC-002 | AC-002 breakdown           | Components and Modules; State Model  | 4-8          | frontend/package.json, frontend/src/main.ts                                                   | Completed |
-| AC-003 | AC-003 breakdown           | Data Model and Mapping Rules         | 2-3          | backend/Program.cs, backend/Data/AppDbContext.cs                                              | Completed |
-| AC-004 | AC-004 breakdown           | Frontend State Model                 | 4, 7         | frontend/src/mocks/createMockSeedData.ts                                                      | Completed |
-| AC-005 | Feature artifacts sections | Traceability Back to Spec            | 1            | specs/spec.md, specs/design.md, specs/plan.md, specs/progress.md                              | Completed |
-| AC-006 | AC-006 breakdown           | API and State-Flow Design            | 5            | frontend/src/views/MembersView.vue                                                            | Completed |
-| AC-007 | AC-007 breakdown           | Components and Modules; Request Flow | 3, 5         | backend/Controllers/TeamMembersController.cs, frontend/src/components/MemberDetailsEditor.vue | Completed |
-| AC-008 | AC-008 breakdown           | Data model lifecycle mapping         | 2-3, 5       | backend/Services/TeamMemberService.cs                                                         | Completed |
-| AC-009 | AC-009 breakdown           | Data Model and Mapping Rules         | 2-3          | backend/Domain/TeamMemberGroup.cs, backend/Data/DbSeeder.cs                                   | Completed |
-| AC-010 | AC-010 breakdown           | Persistence design                   | 2, 8         | backend/Database/team-directory-schema.sql, backend/Database/team-directory-seed.sql          | Completed |
-| AC-011 | AC-011 breakdown           | Frontend modules and route flow      | 4-5          | frontend/src/router/index.ts                                                                  | Completed |
-| AC-012 | AC-012 breakdown           | Request flow includeDeleted query    | 5            | frontend/src/stores/membersStore.ts, backend/Controllers/TeamMembersController.cs             | Completed |
-| AC-013 | AC-013 breakdown           | UI state and component behavior      | 5-6          | frontend/src/views/MembersView.vue, frontend/src/components/MemberDetailsEditor.vue           | Completed |
+| AC ID  | Spec Item(s)               | Design Section                       | Plan Step(s) | Implementation Ref                                                                                                                                                                                  | Status    |
+| ------ | -------------------------- | ------------------------------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| AC-001 | Scope, in-scope            | Architecture Approach by Scope       | 1-8          | Backend and frontend solution slices                                                                                                                                                                | Completed |
+| AC-002 | AC-002 breakdown           | Components and Modules; State Model  | 4-8          | frontend/package.json, frontend/src/main.ts                                                                                                                                                         | Completed |
+| AC-003 | AC-003 breakdown           | Data Model and Mapping Rules         | 2-3          | backend/Program.cs, backend/Data/AppDbContext.cs                                                                                                                                                    | Completed |
+| AC-004 | AC-004 breakdown           | Frontend State Model                 | 4, 7         | frontend/src/mocks/createMockSeedData.ts                                                                                                                                                            | Completed |
+| AC-005 | Feature artifacts sections | Traceability Back to Spec            | 1            | specs/spec.md, specs/design.md, specs/plan.md, specs/progress.md                                                                                                                                    | Completed |
+| AC-006 | AC-006 breakdown           | API and State-Flow Design            | 5            | frontend/src/views/MembersView.vue                                                                                                                                                                  | Completed |
+| AC-007 | AC-007 breakdown           | Components and Modules; Request Flow | 3, 5         | backend/Controllers/TeamMembersController.cs, frontend/src/components/MemberDetailsEditor.vue                                                                                                       | Completed |
+| AC-008 | AC-008 breakdown           | Data model lifecycle mapping         | 2-3, 5       | backend/Services/TeamMemberService.cs                                                                                                                                                               | Completed |
+| AC-009 | AC-009 breakdown           | Data Model and Mapping Rules         | 2-3          | backend/Domain/TeamMemberGroup.cs, backend/Data/DbSeeder.cs                                                                                                                                         | Completed |
+| AC-010 | AC-010 breakdown           | Persistence design                   | 2, 8         | backend/Database/team-directory-schema.sql, backend/Database/team-directory-seed.sql                                                                                                                | Completed |
+| AC-011 | AC-011 breakdown           | Frontend modules and route flow      | 4-5          | frontend/src/router/index.ts                                                                                                                                                                        | Completed |
+| AC-012 | AC-012 breakdown           | Request flow includeDeleted query    | 5            | frontend/src/stores/membersStore.ts, backend/Controllers/TeamMembersController.cs, backend/Services/TeamMemberService.cs                                                                            | Completed |
+| AC-013 | AC-013 breakdown           | UI state and component behavior      | 5-6          | frontend/src/views/MembersView.vue, frontend/src/components/MemberDetailsEditor.vue, frontend/src/composables/useTeamDirectoryViewModel.ts, frontend/src/composables/useMemberDetailsEditorModel.ts | Completed |
 
 ## Open Questions
 

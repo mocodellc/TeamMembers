@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { computed, onMounted, ref, watch } from "vue";
 import type { ComputedRef, Ref } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 import { useGroupsStore } from "../stores/groupsStore";
 import { useMembersStore } from "../stores/membersStore";
 import type {
@@ -44,7 +45,7 @@ type GroupsViewModel = {
   formatDate: (value: string) => string;
 };
 
-function createEmptyDraft(): TeamMemberDraft {
+const createEmptyDraft = (): TeamMemberDraft => {
   return {
     firstName: "",
     lastName: "",
@@ -54,9 +55,9 @@ function createEmptyDraft(): TeamMemberDraft {
     country: "",
     groupIds: [],
   };
-}
+};
 
-function createDraftFromMember(member: TeamMember): TeamMemberDraft {
+const createDraftFromMember = (member: TeamMember): TeamMemberDraft => {
   return {
     firstName: member.firstName,
     lastName: member.lastName,
@@ -66,9 +67,9 @@ function createDraftFromMember(member: TeamMember): TeamMemberDraft {
     country: member.country,
     groupIds: member.groups.map((group) => group.teamGroupId),
   };
-}
+};
 
-export function useMembersViewModel(): MembersViewModel {
+export const useMembersViewModel = (): MembersViewModel => {
   const membersStore = useMembersStore();
   const groupsStore = useGroupsStore();
 
@@ -79,6 +80,14 @@ export function useMembersViewModel(): MembersViewModel {
 
   const hasRows = computed(() => membersStore.members.length > 0);
   const isEditorOpen = computed(() => activeEditMemberId.value !== null);
+
+  const canMutateRow = (member: TeamMember): boolean => {
+    if (!isEditorOpen.value) {
+      return true;
+    }
+
+    return activeEditMemberId.value === member.teamMemberId;
+  };
 
   onMounted(async () => {
     await Promise.all([
@@ -94,7 +103,24 @@ export function useMembersViewModel(): MembersViewModel {
     },
   );
 
-  function beginCreate(): void {
+  onBeforeRouteLeave(() => {
+    if (activeEditMemberId.value === null) {
+      return true;
+    }
+
+    const shouldLeave = window.confirm(
+      "You have an open member editor. Leave this page and discard unsaved changes?",
+    );
+
+    if (!shouldLeave) {
+      return false;
+    }
+
+    cancelEdit();
+    return true;
+  });
+
+  const beginCreate = (): void => {
     membersStore.clearMessages();
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
@@ -109,9 +135,13 @@ export function useMembersViewModel(): MembersViewModel {
     };
     activeAuditInfo.value = null;
     activeEditMemberId.value = "new";
-  }
+  };
 
-  function beginEdit(member: TeamMember): void {
+  const beginEdit = (member: TeamMember): void => {
+    if (!canMutateRow(member)) {
+      return;
+    }
+
     membersStore.clearMessages();
     activeEditMemberId.value = member.teamMemberId;
     activeDraft.value = createDraftFromMember(member);
@@ -120,15 +150,15 @@ export function useMembersViewModel(): MembersViewModel {
       lastEditDate: member.lastEditDate,
       deletedDate: member.deletedDate,
     };
-  }
+  };
 
-  function cancelEdit(): void {
+  const cancelEdit = (): void => {
     activeEditMemberId.value = null;
     activeDraft.value = createEmptyDraft();
     activeAuditInfo.value = null;
-  }
+  };
 
-  async function saveDraft(draft: TeamMemberDraft): Promise<void> {
+  const saveDraft = async (draft: TeamMemberDraft): Promise<void> => {
     isSaving.value = true;
 
     const request: TeamMemberUpsertRequest = {
@@ -156,9 +186,13 @@ export function useMembersViewModel(): MembersViewModel {
     }
 
     isSaving.value = false;
-  }
+  };
 
-  async function deleteOrUndelete(member: TeamMember): Promise<void> {
+  const deleteOrUndelete = async (member: TeamMember): Promise<void> => {
+    if (!canMutateRow(member)) {
+      return;
+    }
+
     if (activeEditMemberId.value === member.teamMemberId) {
       cancelEdit();
     }
@@ -169,7 +203,7 @@ export function useMembersViewModel(): MembersViewModel {
     }
 
     await membersStore.undeleteMemberAndReload(member.teamMemberId);
-  }
+  };
 
   return {
     membersStore,
@@ -186,9 +220,9 @@ export function useMembersViewModel(): MembersViewModel {
     saveDraft,
     deleteOrUndelete,
   };
-}
+};
 
-export function useGroupsViewModel(): GroupsViewModel {
+export const useGroupsViewModel = (): GroupsViewModel => {
   const groupsStore = useGroupsStore();
 
   const draftName = ref("");
@@ -199,7 +233,29 @@ export function useGroupsViewModel(): GroupsViewModel {
     await groupsStore.loadGroups();
   });
 
-  async function saveGroup(): Promise<void> {
+  onBeforeRouteLeave(() => {
+    const hasUnsavedDraft =
+      editGroupId.value !== null ||
+      draftName.value.trim().length > 0 ||
+      draftDescription.value.trim().length > 0;
+
+    if (!hasUnsavedDraft) {
+      return true;
+    }
+
+    const shouldLeave = window.confirm(
+      "You have an open group editor. Leave this page and discard unsaved changes?",
+    );
+
+    if (!shouldLeave) {
+      return false;
+    }
+
+    resetForm();
+    return true;
+  });
+
+  const saveGroup = async (): Promise<void> => {
     const payload = {
       name: draftName.value.trim(),
       description: draftDescription.value.trim(),
@@ -223,32 +279,32 @@ export function useGroupsViewModel(): GroupsViewModel {
     if (success) {
       resetForm();
     }
-  }
+  };
 
-  function startEdit(group: TeamGroup): void {
+  const startEdit = (group: TeamGroup): void => {
     groupsStore.clearMessages();
     editGroupId.value = group.teamGroupId;
     draftName.value = group.name;
     draftDescription.value = group.description;
-  }
+  };
 
-  function resetForm(): void {
+  const resetForm = (): void => {
     editGroupId.value = null;
     draftName.value = "";
     draftDescription.value = "";
-  }
+  };
 
-  async function removeGroup(teamGroupId: number): Promise<void> {
+  const removeGroup = async (teamGroupId: number): Promise<void> => {
     await groupsStore.deleteGroupAndReload(teamGroupId);
     if (editGroupId.value === teamGroupId) {
       resetForm();
     }
-  }
+  };
 
-  function formatDate(value: string): string {
+  const formatDate = (value: string): string => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
-  }
+  };
 
   return {
     groupsStore,
@@ -261,4 +317,4 @@ export function useGroupsViewModel(): GroupsViewModel {
     removeGroup,
     formatDate,
   };
-}
+};

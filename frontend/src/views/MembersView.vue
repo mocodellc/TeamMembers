@@ -116,14 +116,16 @@ const {
               <div class="flex justify-end gap-2">
                 <button
                   type="button"
-                  class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-cyan-400 hover:text-cyan-200"
+                  class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-cyan-400 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="isEditorOpen"
                   @click="beginEdit(member)"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-rose-400 hover:text-rose-200"
+                  class="rounded border border-slate-600 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-rose-400 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="isEditorOpen"
                   @click="deleteOrUndelete(member)"
                 >
                   {{ member.deletedDate ? "Undelete" : "Delete" }}
