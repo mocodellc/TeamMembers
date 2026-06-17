@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { faker } from "@faker-js/faker";
 import { computed, onMounted, ref, watch } from "vue";
 import MemberDetailsEditor from "../components/MemberDetailsEditor.vue";
 import { useGroupsStore } from "../stores/groupsStore";
@@ -15,6 +16,11 @@ const groupsStore = useGroupsStore();
 const activeEditMemberId = ref<number | "new" | null>(null);
 const isSaving = ref(false);
 const activeDraft = ref<TeamMemberDraft>(createEmptyDraft());
+const activeAuditInfo = ref<{
+  createdDate: string | null;
+  lastEditDate: string | null;
+  deletedDate: string | null;
+} | null>(null);
 
 const hasRows = computed(() => membersStore.members.length > 0);
 
@@ -58,19 +64,36 @@ watch(
 
 function beginCreate(): void {
   membersStore.clearMessages();
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
+  activeDraft.value = {
+    firstName,
+    lastName,
+    email: faker.internet.email({ firstName, lastName }).toLowerCase(),
+    jobTitle: faker.person.jobTitle(),
+    department: faker.commerce.department(),
+    country: faker.location.country(),
+    groupIds: [],
+  };
+  activeAuditInfo.value = null;
   activeEditMemberId.value = "new";
-  activeDraft.value = createEmptyDraft();
 }
 
 function beginEdit(member: TeamMember): void {
   membersStore.clearMessages();
   activeEditMemberId.value = member.teamMemberId;
   activeDraft.value = createDraftFromMember(member);
+  activeAuditInfo.value = {
+    createdDate: member.createdDate,
+    lastEditDate: member.lastEditDate,
+    deletedDate: member.deletedDate,
+  };
 }
 
 function cancelEdit(): void {
   activeEditMemberId.value = null;
   activeDraft.value = createEmptyDraft();
+  activeAuditInfo.value = null;
 }
 
 async function saveDraft(draft: TeamMemberDraft): Promise<void> {
@@ -104,21 +127,16 @@ async function saveDraft(draft: TeamMemberDraft): Promise<void> {
 }
 
 async function deleteOrUndelete(member: TeamMember): Promise<void> {
+  if (activeEditMemberId.value === member.teamMemberId) {
+    cancelEdit();
+  }
+
   if (member.deletedDate === null) {
     await membersStore.deleteMemberAndReload(member.teamMemberId);
     return;
   }
 
   await membersStore.undeleteMemberAndReload(member.teamMemberId);
-}
-
-function formatDate(value: string | null): string {
-  if (value === null) {
-    return "-";
-  }
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
 }
 </script>
 
@@ -167,6 +185,7 @@ function formatDate(value: string | null): string {
     <div v-if="activeEditMemberId === 'new'" class="mb-4">
       <MemberDetailsEditor
         :model-value="activeDraft"
+        :audit-info="activeAuditInfo"
         :groups="groupsStore.groups"
         :is-saving="isSaving"
         title="Create Team Member"
@@ -183,10 +202,6 @@ function formatDate(value: string | null): string {
             <th class="px-3 py-3 font-medium">Email</th>
             <th class="px-3 py-3 font-medium">Role</th>
             <th class="px-3 py-3 font-medium">Department</th>
-            <th class="px-3 py-3 font-medium">Groups</th>
-            <th class="px-3 py-3 font-medium">Created</th>
-            <th class="px-3 py-3 font-medium">Last Edit</th>
-            <th class="px-3 py-3 font-medium">Deleted</th>
             <th class="px-3 py-3 text-right font-medium">Action</th>
           </tr>
         </thead>
@@ -209,20 +224,6 @@ function formatDate(value: string | null): string {
             <td class="px-3 py-3">{{ member.jobTitle }}</td>
             <td class="px-3 py-3">{{ member.department }}</td>
             <td class="px-3 py-3">
-              <div class="flex flex-wrap gap-1">
-                <span
-                  v-for="group in member.groups"
-                  :key="group.teamGroupId"
-                  class="rounded-full border border-cyan-500/50 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
-                >
-                  {{ group.name }}
-                </span>
-              </div>
-            </td>
-            <td class="px-3 py-3">{{ formatDate(member.createdDate) }}</td>
-            <td class="px-3 py-3">{{ formatDate(member.lastEditDate) }}</td>
-            <td class="px-3 py-3">{{ formatDate(member.deletedDate) }}</td>
-            <td class="px-3 py-3">
               <div class="flex justify-end gap-2">
                 <button
                   type="button"
@@ -242,9 +243,10 @@ function formatDate(value: string | null): string {
             </td>
           </tr>
           <tr v-if="activeEditMemberId === member.teamMemberId">
-            <td colspan="9" class="p-3">
+            <td colspan="5" class="p-3">
               <MemberDetailsEditor
                 :model-value="activeDraft"
+                :audit-info="activeAuditInfo"
                 :groups="groupsStore.groups"
                 :is-saving="isSaving"
                 title="Edit Team Member"
