@@ -1,86 +1,50 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useGroupsStore } from '../stores/groupsStore'
-import type { TeamGroup } from '../types/teamDirectory'
+import { useGroupsViewModel } from "../composables/useTeamDirectoryViewModel";
 
-const groupsStore = useGroupsStore()
-
-const draftName = ref('')
-const draftDescription = ref('')
-const editGroupId = ref<number | null>(null)
-
-onMounted(async () => {
-  await groupsStore.loadGroups()
-})
-
-async function saveGroup(): Promise<void> {
-  const payload = {
-    name: draftName.value.trim(),
-    description: draftDescription.value.trim(),
-  }
-
-  if (!payload.name || !payload.description) {
-    groupsStore.errorMessage = 'Name and description are required.'
-    return
-  }
-
-  let success = false
-  if (editGroupId.value === null) {
-    success = await groupsStore.createGroupAndReload(payload)
-  } else {
-    success = await groupsStore.updateGroupAndReload(editGroupId.value, payload)
-  }
-
-  if (success) {
-    resetForm()
-  }
-}
-
-function startEdit(group: TeamGroup): void {
-  groupsStore.clearMessages()
-  editGroupId.value = group.teamGroupId
-  draftName.value = group.name
-  draftDescription.value = group.description
-}
-
-function resetForm(): void {
-  editGroupId.value = null
-  draftName.value = ''
-  draftDescription.value = ''
-}
-
-async function removeGroup(teamGroupId: number): Promise<void> {
-  await groupsStore.deleteGroupAndReload(teamGroupId)
-  if (editGroupId.value === teamGroupId) {
-    resetForm()
-  }
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString()
-}
+const {
+  groupsStore,
+  draftName,
+  draftDescription,
+  editGroupId,
+  saveGroup,
+  startEdit,
+  resetForm,
+  removeGroup,
+  formatDate,
+} = useGroupsViewModel();
 </script>
 
 <template>
-  <section class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/40 md:p-6">
+  <section
+    class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/40 md:p-6"
+  >
     <div class="mb-4 flex items-center justify-between">
       <h2 class="font-heading text-2xl text-white">Groups</h2>
     </div>
 
-    <p v-if="groupsStore.errorMessage" class="mb-3 rounded-md border border-rose-400/50 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
+    <p
+      v-if="groupsStore.errorMessage"
+      class="mb-3 rounded-md border border-rose-400/50 bg-rose-950/40 px-3 py-2 text-sm text-rose-200"
+    >
       {{ groupsStore.errorMessage }}
     </p>
-    <p v-if="groupsStore.successMessage" class="mb-3 rounded-md border border-emerald-400/50 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-200">
+    <p
+      v-if="groupsStore.successMessage"
+      class="mb-3 rounded-md border border-emerald-400/50 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-200"
+    >
       {{ groupsStore.successMessage }}
     </p>
 
     <div class="mb-4 rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-200">
-        {{ editGroupId === null ? 'Create Group' : 'Edit Group' }}
+      <h3
+        class="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-200"
+      >
+        {{ editGroupId === null ? "Create Group" : "Edit Group" }}
       </h3>
       <div class="grid gap-3 md:grid-cols-2">
-        <label class="flex flex-col gap-1 text-xs uppercase tracking-wide text-slate-400">
+        <label
+          class="flex flex-col gap-1 text-xs uppercase tracking-wide text-slate-400"
+        >
           Name
           <input
             v-model="draftName"
@@ -88,7 +52,9 @@ function formatDate(value: string): string {
             class="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none ring-cyan-400 transition focus:ring-2"
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs uppercase tracking-wide text-slate-400">
+        <label
+          class="flex flex-col gap-1 text-xs uppercase tracking-wide text-slate-400"
+        >
           Description
           <input
             v-model="draftDescription"
@@ -153,7 +119,10 @@ function formatDate(value: string): string {
       </table>
     </div>
 
-    <div v-if="groupsStore.isLoading" class="mt-3 rounded-md border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-300">
+    <div
+      v-if="groupsStore.isLoading"
+      class="mt-3 rounded-md border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-300"
+    >
       Loading groups...
     </div>
     <div

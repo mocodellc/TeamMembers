@@ -1,143 +1,22 @@
 <script setup lang="ts">
-import { faker } from "@faker-js/faker";
-import { computed, onMounted, ref, watch } from "vue";
 import MemberDetailsEditor from "../components/MemberDetailsEditor.vue";
-import { useGroupsStore } from "../stores/groupsStore";
-import { useMembersStore } from "../stores/membersStore";
-import type {
-  TeamMember,
-  TeamMemberDraft,
-  TeamMemberUpsertRequest,
-} from "../types/teamDirectory";
+import { useMembersViewModel } from "../composables/useTeamDirectoryViewModel";
 
-const membersStore = useMembersStore();
-const groupsStore = useGroupsStore();
-
-const activeEditMemberId = ref<number | "new" | null>(null);
-const isSaving = ref(false);
-const activeDraft = ref<TeamMemberDraft>(createEmptyDraft());
-const activeAuditInfo = ref<{
-  createdDate: string | null;
-  lastEditDate: string | null;
-  deletedDate: string | null;
-} | null>(null);
-
-const hasRows = computed(() => membersStore.members.length > 0);
-
-onMounted(async () => {
-  await Promise.all([
-    groupsStore.loadGroups(),
-    membersStore.loadMembers(false),
-  ]);
-});
-
-function createEmptyDraft(): TeamMemberDraft {
-  return {
-    firstName: "",
-    lastName: "",
-    email: "",
-    jobTitle: "",
-    department: "",
-    country: "",
-    groupIds: [],
-  };
-}
-
-function createDraftFromMember(member: TeamMember): TeamMemberDraft {
-  return {
-    firstName: member.firstName,
-    lastName: member.lastName,
-    email: member.email,
-    jobTitle: member.jobTitle,
-    department: member.department,
-    country: member.country,
-    groupIds: member.groups.map((group) => group.teamGroupId),
-  };
-}
-
-watch(
-  () => membersStore.includeDeleted,
-  (includeDeleted) => {
-    void membersStore.loadMembers(includeDeleted);
-  },
-);
-
-function beginCreate(): void {
-  membersStore.clearMessages();
-  const firstName = faker.person.firstName();
-  const lastName = faker.person.lastName();
-  activeDraft.value = {
-    firstName,
-    lastName,
-    email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-    jobTitle: faker.person.jobTitle(),
-    department: faker.commerce.department(),
-    country: faker.location.country(),
-    groupIds: [],
-  };
-  activeAuditInfo.value = null;
-  activeEditMemberId.value = "new";
-}
-
-function beginEdit(member: TeamMember): void {
-  membersStore.clearMessages();
-  activeEditMemberId.value = member.teamMemberId;
-  activeDraft.value = createDraftFromMember(member);
-  activeAuditInfo.value = {
-    createdDate: member.createdDate,
-    lastEditDate: member.lastEditDate,
-    deletedDate: member.deletedDate,
-  };
-}
-
-function cancelEdit(): void {
-  activeEditMemberId.value = null;
-  activeDraft.value = createEmptyDraft();
-  activeAuditInfo.value = null;
-}
-
-async function saveDraft(draft: TeamMemberDraft): Promise<void> {
-  isSaving.value = true;
-
-  const request: TeamMemberUpsertRequest = {
-    firstName: draft.firstName.trim(),
-    lastName: draft.lastName.trim(),
-    email: draft.email.trim(),
-    jobTitle: draft.jobTitle.trim(),
-    department: draft.department.trim(),
-    country: draft.country.trim(),
-    groupIds: [...draft.groupIds],
-  };
-
-  let success = false;
-  if (activeEditMemberId.value === "new") {
-    success = await membersStore.createMemberAndReload(request);
-  } else if (typeof activeEditMemberId.value === "number") {
-    success = await membersStore.updateMemberAndReload(
-      activeEditMemberId.value,
-      request,
-    );
-  }
-
-  if (success) {
-    cancelEdit();
-  }
-
-  isSaving.value = false;
-}
-
-async function deleteOrUndelete(member: TeamMember): Promise<void> {
-  if (activeEditMemberId.value === member.teamMemberId) {
-    cancelEdit();
-  }
-
-  if (member.deletedDate === null) {
-    await membersStore.deleteMemberAndReload(member.teamMemberId);
-    return;
-  }
-
-  await membersStore.undeleteMemberAndReload(member.teamMemberId);
-}
+const {
+  membersStore,
+  groupsStore,
+  activeEditMemberId,
+  isSaving,
+  activeDraft,
+  activeAuditInfo,
+  hasRows,
+  isEditorOpen,
+  beginCreate,
+  beginEdit,
+  cancelEdit,
+  saveDraft,
+  deleteOrUndelete,
+} = useMembersViewModel();
 </script>
 
 <template>
@@ -147,21 +26,31 @@ async function deleteOrUndelete(member: TeamMember): Promise<void> {
     <div
       class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
     >
-      <h2 class="font-heading text-2xl text-white">Members</h2>
+      <h2 class="font-heading text-2xl text-white">
+        Members
+        <span
+          class="ml-2 rounded-full border border-slate-700 bg-slate-800 px-2 py-1 align-middle text-xs font-medium text-slate-300"
+        >
+          {{ membersStore.members.length }}
+        </span>
+      </h2>
       <div class="flex flex-wrap items-center gap-3">
         <label
           class="inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200"
+          :class="isEditorOpen ? 'cursor-not-allowed opacity-60' : ''"
         >
           <input
             v-model="membersStore.includeDeleted"
             type="checkbox"
             class="h-4 w-4 accent-cyan-400"
+            :disabled="isEditorOpen"
           />
           <span>Show deleted</span>
         </label>
         <button
           type="button"
-          class="rounded-md bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+          class="rounded-md bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="isEditorOpen"
           @click="beginCreate"
         >
           Create New Member
