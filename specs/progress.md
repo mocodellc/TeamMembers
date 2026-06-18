@@ -20,7 +20,6 @@
 
 ### Pending
 
-- Optional unit/integration test implementation for backend and frontend.
 - Optional lint script/config standardization if repository policy requires strict lint gate.
 
 ### Blockers
@@ -44,6 +43,8 @@ Use exact status markers: `[ ] Pending`, `[/] In Progress`, `[x] Completed`.
 - [x] Completed: AC-011 Members and groups routes added
 - [x] Completed: AC-012 includeDeleted query behavior wired to checkbox
 - [x] Completed: AC-013 Action column and inline slide-down editor with save/cancel
+- [x] Completed: AC-014 Backend xUnit test project (30 tests: controllers + service layer)
+- [x] Completed: AC-015 Frontend Vitest test suite (22 tests: groupsStore + membersStore)
 
 ## Active Session Log
 
@@ -54,12 +55,14 @@ Use exact status markers: `[ ] Pending`, `[/] In Progress`, `[x] Completed`.
 - [2026-06-15 00:28] Implemented frontend API layer, Pinia stores, router, members/groups views, and member inline editor component.
 - [2026-06-15 00:34] Added Tailwind and faker dependencies/config; added mock seed data generator.
 - [2026-06-15 00:39] Ran dotnet build and pnpm build successfully after fixing Vue table template structure.
+- [2026-06-18 00:00] Added backend.Tests xUnit project (30 tests passing) and frontend Vitest suite (22 tests passing).
+- [2026-06-18 00:05] Added `test:run` script to frontend/package.json for one-shot test execution.
+- [2026-06-18 00:06] Updated specs/design.md test strategy, specs/plan.md steps/verification, and specs/progress.md.
 
 ## Immediate Next Steps
 
-1. Add backend xUnit tests for TeamMemberService and TeamGroupService behavior branches.
-2. Add Vitest component/store tests for members and groups view-state transitions.
-3. Run full manual acceptance walkthrough with backend running and verify edit/delete/undelete interactions.
+1. Run full manual acceptance walkthrough with backend running and verify edit/delete/undelete interactions.
+2. Optionally add lint gate (ESLint for frontend, dotnet-format or Roslyn analyzers for backend).
 
 ## AC Status Snapshot
 
@@ -78,6 +81,8 @@ Use exact status markers: `[ ] Pending`, `[/] In Progress`, `[x] Completed`.
 | AC-011 | Completed | frontend/src/router/index.ts                                                    |
 | AC-012 | Completed | frontend/src/stores/membersStore.ts includeDeleted handling                     |
 | AC-013 | Completed | frontend/src/components/MemberDetailsEditor.vue + MembersView inline editor row |
+| AC-014 | Completed | backend.Tests/ — 30 xUnit tests for controllers and TeamGroupService              |
+| AC-015 | Completed | frontend/src/stores/__tests__/ — 22 Vitest tests for groupsStore and membersStore  |
 
 ## Run Compliance Checklist
 

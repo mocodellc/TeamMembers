@@ -118,6 +118,19 @@
 ### Unit Tests
 
 - [x] Backend service logic is designed for isolated unit testing with interfaces
+- [x] `backend.Tests` xUnit project added to solution; 30 tests covering `TeamGroupsController`, `TeamMembersController`, and `TeamGroupService` (SQLite in-memory)
+- [x] Frontend Vitest project configured via `vitest.config.ts` (jsdom); 22 tests covering `membersStore` and `groupsStore` store actions, state transitions, and error paths
+
+### Test Locations
+
+| Layer    | Project / Path                                            | Runner | Count |
+| -------- | --------------------------------------------------------- | ------ | ----- |
+| Backend  | `backend.Tests/Controllers/TeamGroupsControllerTests.cs`  | xUnit  | 8     |
+| Backend  | `backend.Tests/Controllers/TeamMembersControllerTests.cs` | xUnit  | 9     |
+| Backend  | `backend.Tests/Services/TeamGroupServiceTests.cs`         | xUnit  | 13    |
+| Frontend | `frontend/src/stores/__tests__/groupsStore.spec.ts`       | Vitest | 10    |
+| Frontend | `frontend/src/stores/__tests__/membersStore.spec.ts`      | Vitest | 12    |
+
 - [x] Frontend store API boundaries are isolated for Vitest mocking
 
 ### Integration/API Tests

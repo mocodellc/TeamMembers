@@ -21,6 +21,7 @@
 7. [x] Add frontend typed API layer and stores to orchestrate all API calls and states.
 8. [x] Validate via build commands and update progress/compliance results.
 9. [x] Align member deleted-toggle behavior so API returns the requested subset (active-only vs deleted-only).
+15. [x] Add backend.Tests xUnit project and frontend Vitest tests; all 52 tests pass.
 10. [x] Refactor members/groups view logic into a shared composable and keep view scripts minimal.
 11. [x] Improve member UX with editor audit labels, live row count indicator, and editor-state control disabling.
 12. [x] Add root README project overview for GitHub landing presentation.
@@ -61,6 +62,13 @@
 | frontend/src/App.vue                                    | Update        | App shell and nav                                                  | Step 4       |
 | README.md                                               | Create/Update | Professional project overview and setup instructions               | Step 12      |
 | specs/progress.md                                       | Create/Update | Track execution state and compliance                               | Step 8       |
+| backend.Tests/backend.Tests.csproj                      | Create        | xUnit test project referencing backend + Moq + SQLite              | Step 15      |
+| backend.Tests/Controllers/TeamGroupsControllerTests.cs  | Create        | Controller unit tests with mocked ITeamGroupService                | Step 15      |
+| backend.Tests/Controllers/TeamMembersControllerTests.cs | Create        | Controller unit tests with mocked ITeamMemberService               | Step 15      |
+| backend.Tests/Services/TeamGroupServiceTests.cs         | Create        | Service integration tests with SQLite in-memory AppDbContext       | Step 15      |
+| frontend/vitest.config.ts                               | Create        | Vitest config with jsdom environment and Vue plugin                | Step 15      |
+| frontend/src/stores/__tests__/groupsStore.spec.ts       | Create        | Pinia store unit tests for groupsStore actions and state           | Step 15      |
+| frontend/src/stores/__tests__/membersStore.spec.ts      | Create        | Pinia store unit tests for membersStore actions and state          | Step 15      |
 
 ## Dependency and Sequencing Notes
 
@@ -78,13 +86,13 @@
 
 - [x] Build passes
 - [ ] Lint passes
-- [ ] Tests pass
+- [x] Tests pass (30 backend xUnit + 22 frontend Vitest)
 - [x] Manual acceptance checks completed
 
 ## Definition of Done
 
 - [x] All scoped AC items marked complete
-- [ ] Traceability tables updated in specs/spec.md
+- [x] Traceability tables updated in specs/spec.md
 - [x] specs/progress.md reflects latest status
 - [x] No unresolved blockers
 
