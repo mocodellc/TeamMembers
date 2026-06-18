@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from "pinia";
-import { createApp, nextTick } from "vue";
+import { createApp } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useGroupsViewModel } from "../useTeamDirectoryViewModel";
 import type { TeamGroup } from "../../types/teamDirectory";

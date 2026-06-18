@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useMemberDetailsEditorModel } from "../useMemberDetailsEditorModel";
 import type { TeamMemberDraft } from "../../types/teamDirectory";
 

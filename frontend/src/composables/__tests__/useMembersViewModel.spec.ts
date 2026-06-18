@@ -2,8 +2,6 @@ import { createPinia, setActivePinia } from "pinia";
 import { createApp, nextTick } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useMembersViewModel } from "../useTeamDirectoryViewModel";
-import { useMembersStore } from "../../stores/membersStore";
-import { useGroupsStore } from "../../stores/groupsStore";
 import type { TeamMember } from "../../types/teamDirectory";
 
 // ── module mocks ──────────────────────────────────────────────────────────────
